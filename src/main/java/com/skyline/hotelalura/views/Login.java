@@ -1,5 +1,9 @@
 package com.skyline.hotelalura.views;
 
+import com.skyline.hotelalura.config.components.DaggerUserComponent;
+import com.skyline.hotelalura.config.components.UserComponent;
+import com.skyline.hotelalura.controllers.AuthController;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -10,6 +14,7 @@ import java.util.Objects;
 
 public class Login extends JFrame {
 
+    public AuthController controller;
     private final JPanel contentPane;
     private final JTextField txtUsername;
     private final JPasswordField txtPassword;
@@ -30,6 +35,9 @@ public class Login extends JFrame {
     }
 
     public Login() {
+        UserComponent component = DaggerUserComponent.create();
+        this.controller = component.buildSellerController();
+
         setResizable(false);
         setUndecorated(true);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -172,7 +180,7 @@ public class Login extends JFrame {
             }
             @Override
             public void mouseClicked(MouseEvent e) {
-                new Login();
+                Login.this.login();
             }
         });
         btnLogin.setBackground(SystemColor.textHighlight);
@@ -213,9 +221,27 @@ public class Login extends JFrame {
         header.setLayout(null);
     }
 
-    private void Login() {
-        // TODO: Implementar el login
+    private void login() {
+        String username = txtUsername.getText();
+        String password = String.valueOf(txtPassword.getPassword());
+        if (username.equals("Enter your username") || password.equals("********")) {
+            JOptionPane.showMessageDialog(null, "Please enter your username and password");
+        } else {
+            try {
+                boolean response = this.controller.login(username, password);
+
+                if (response) {
+                    System.out.println("Login successful");
+                } else {
+                    JOptionPane.showMessageDialog( null, "Incorrect username and/or password",
+                            "Error Login", JOptionPane.WARNING_MESSAGE );
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, e);
+            }
+        }
     }
+
     private void headerMousePressed(java.awt.event.MouseEvent evt) {
         xMouse = evt.getX();
         yMouse = evt.getY();
