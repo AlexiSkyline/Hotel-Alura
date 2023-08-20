@@ -14,7 +14,7 @@ import java.util.Objects;
 
 public class Login extends JFrame {
 
-    public AuthController controller;
+    public final AuthController controller;
     private final JPanel contentPane;
     private final JTextField txtUsername;
     private final JPasswordField txtPassword;
@@ -22,14 +22,12 @@ public class Login extends JFrame {
     private final JLabel labelExit;
 
     public static void main(String[] args) {
-        EventQueue.invokeLater(new Runnable() {
-            public void run() {
-                try {
-                    Login frame = new Login();
-                    frame.setVisible(true);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+        EventQueue.invokeLater(() -> {
+            try {
+                Login frame = new Login();
+                frame.setVisible(true);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
     }
@@ -198,7 +196,7 @@ public class Login extends JFrame {
 
         JLabel lblNewLabel_1 = new JLabel("");
         lblNewLabel_1.setHorizontalAlignment(SwingConstants.CENTER);
-        lblNewLabel_1.setIcon(new ImageIcon(Login.class.getResource("/images/lOGO-50PX.png")));
+        lblNewLabel_1.setIcon(new ImageIcon(Objects.requireNonNull(Login.class.getResource("/images/lOGO-50PX.png"))));
         lblNewLabel_1.setBounds(65, 65, 48, 59);
         panel.add(lblNewLabel_1);
 
@@ -231,7 +229,9 @@ public class Login extends JFrame {
                 boolean response = this.controller.login(username, password);
 
                 if (response) {
-                    System.out.println("Login successful");
+                    Home home = new Home();
+                    home.setVisible(true);
+                    dispose();
                 } else {
                     JOptionPane.showMessageDialog( null, "Incorrect username and/or password",
                             "Error Login", JOptionPane.WARNING_MESSAGE );
