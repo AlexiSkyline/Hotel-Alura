@@ -1,5 +1,7 @@
 package com.skyline.hotelalura.views;
 
+import com.skyline.hotelalura.views.reservation.ReservationRegister;
+
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
@@ -13,7 +15,7 @@ import java.util.Objects;
 public class Home extends JFrame {
 
     private JPanel contentPane;
-    public int xMouse, yMouse;
+    private int xMouse, yMouse;
     private JLabel labelExit;
     private JLabel labelRegister;
 
@@ -78,7 +80,9 @@ public class Home extends JFrame {
             }
             @Override
             public void mouseClicked(MouseEvent e) {
-                // Todo: Abrir tela de registro de reservas
+                ReservationRegister reservationRegister = new ReservationRegister();
+                reservationRegister.setVisible(true);
+                dispose();
             }
         });
         btnRegister.setBounds(0, 255, 257, 56);

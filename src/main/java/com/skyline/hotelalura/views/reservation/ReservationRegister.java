@@ -1,6 +1,7 @@
 package com.skyline.hotelalura.views.reservation;
 
 import com.skyline.hotelalura.views.Home;
+import com.skyline.hotelalura.views.guest.GuestRegister;
 import com.toedter.calendar.JDateChooser;
 
 import javax.swing.*;
@@ -235,9 +236,8 @@ public class ReservationRegister extends JFrame {
 
         txtValue = new JTextField();
         txtValue.setBackground(SystemColor.text);
-        txtValue.setHorizontalAlignment(SwingConstants.CENTER);
         txtValue.setForeground(Color.BLACK);
-        txtValue.setBounds(78, 328, 43, 33);
+        txtValue.setBounds(68, 328, 289, 35);
         txtValue.setEditable(false);
         txtValue.setFont(new Font("Roboto Black", Font.BOLD, 17));
         txtValue.setBorder(javax.swing.BorderFactory.createEmptyBorder());
@@ -265,7 +265,12 @@ public class ReservationRegister extends JFrame {
             @Override
             public void mouseClicked(MouseEvent e) {
                 if (ReservationRegister.txtDateEntry.getDate() != null && ReservationRegister.txtDateDeparture.getDate() != null) {
-                    // Todo: Registro de Huespedes
+                    if (ReservationRegister.txtDateEntry.getDate().before(ReservationRegister.txtDateDeparture.getDate())) {
+                        GuestRegister frame = new GuestRegister();
+                        frame.setVisible(true);
+                    } else {
+                        JOptionPane.showMessageDialog(null, "The departure date must be greater than the entry date.");
+                    }
                 } else {
                     JOptionPane.showMessageDialog(null, "You must fill in all fields.");
                 }
