@@ -10,8 +10,8 @@ import java.util.Objects;
 
 public class MainMenu extends JFrame {
 
-    private JPanel contentPane;
-    private JLabel labelExit;
+    private final JPanel contentPane;
+    private final JLabel labelExit;
     public int xMouse, yMouse;
 
     public static void main(String[] args) {
@@ -118,7 +118,11 @@ public class MainMenu extends JFrame {
         btnLogin.setBounds(754, 300, 83, 70);
         btnLogin.addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e) {}
+            public void mouseClicked(MouseEvent e) {
+                Login login = new Login();
+                login.setVisible(true);
+                dispose();
+            }
         });
         btnLogin.setLayout(null);
         btnLogin.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
