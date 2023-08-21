@@ -1,5 +1,12 @@
 package com.skyline.hotelalura.views.guest;
 
+import com.skyline.hotelalura.config.components.DaggerReservationComponent;
+import com.skyline.hotelalura.config.components.DaggerUserComponent;
+import com.skyline.hotelalura.config.components.ReservationComponent;
+import com.skyline.hotelalura.config.components.UserComponent;
+import com.skyline.hotelalura.controllers.ReservationController;
+import com.skyline.hotelalura.models.Guest;
+import com.skyline.hotelalura.models.Reservation;
 import com.skyline.hotelalura.views.Home;
 import com.skyline.hotelalura.views.reservation.ReservationRegister;
 import com.toedter.calendar.JDateChooser;
@@ -10,7 +17,10 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.sql.SQLException;
 import java.text.Format;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Objects;
 
 public class GuestRegister extends JFrame  {
@@ -25,19 +35,12 @@ public class GuestRegister extends JFrame  {
     private JLabel labelExit;
     private JLabel labelBack;
     private int xMouse, yMouse;
+    private final ReservationController reservationController;
 
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            try {
-                GuestRegister frame = new GuestRegister();
-                frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
+    public GuestRegister(Reservation reservation) {
+        ReservationComponent component = DaggerReservationComponent.create();
+        this.reservationController = component.buildReservationController();
 
-    public GuestRegister() {
         setIconImage(Toolkit.getDefaultToolkit().getImage(GuestRegister.class.getResource("/images/lOGO-50PX.png")));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 910, 634);
@@ -109,7 +112,7 @@ public class GuestRegister extends JFrame  {
         btnBack.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                ReservationRegister frame = new ReservationRegister();
+                ReservationRegister frame = new ReservationRegister(reservation);
                 frame.setVisible(true);
                 dispose();
             }
@@ -223,6 +226,7 @@ public class GuestRegister extends JFrame  {
         txtReservationNumber.setBackground(Color.WHITE);
         txtReservationNumber.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         contentPane.add(txtReservationNumber);
+        txtReservationNumber.setText(String.valueOf(reservation.getId()));
 
         JSeparator separator_1_2 = new JSeparator();
         separator_1_2.setBounds(560, 170, 289, 2);
@@ -265,6 +269,25 @@ public class GuestRegister extends JFrame  {
         btnSave.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
+                Guest guest = Guest.builder()
+                        .id(0)
+                        .name(txtName.getText())
+                        .surname(txtSurname.getText())
+                        .birthDate(parseDate(txtBirthDate.getDate()))
+                        .nationality(txtNationality.getSelectedItem().toString())
+                        .phoneNumber(txtPhoneNumber.getText())
+                        .reservationId(reservation.getId())
+                        .build();
+
+                try {
+                    reservationController.makeReservation(reservation, guest);
+                    JOptionPane.showMessageDialog(null, "Reservation made successfully!");
+                    Home home = new Home();
+                    home.setVisible(true);
+                    dispose();
+                } catch (SQLException ex) {
+                    JOptionPane.showMessageDialog(null, "Error while making reservation!");
+                }
             }
         });
         btnSave.setLayout(null);
@@ -305,5 +328,15 @@ public class GuestRegister extends JFrame  {
         int x = evt.getXOnScreen();
         int y = evt.getYOnScreen();
         this.setLocation(x - this.xMouse, y - this.yMouse);
+    }
+
+    private static Date parseDate(Date date) {
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            return dateFormat.parse(dateFormat.format(date));
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error parsing date.");
+        }
+        return null;
     }
 }

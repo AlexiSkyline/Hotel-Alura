@@ -1,5 +1,6 @@
 package com.skyline.hotelalura.views.reservation;
 
+import com.skyline.hotelalura.models.Reservation;
 import com.skyline.hotelalura.views.Home;
 import com.skyline.hotelalura.views.guest.GuestRegister;
 import com.toedter.calendar.JDateChooser;
@@ -11,7 +12,13 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.Objects;
+import java.util.Random;
+import java.util.concurrent.TimeUnit;
 
 public class ReservationRegister extends JFrame {
     private JPanel contentPane;
@@ -22,6 +29,7 @@ public class ReservationRegister extends JFrame {
     private  int xMouse, yMouse;
     private JLabel labelExit;
     private JLabel labelBack;
+    private Reservation reservation;
 
     public static void main(String[] args) {
         EventQueue.invokeLater(() -> {
@@ -36,6 +44,23 @@ public class ReservationRegister extends JFrame {
 
     public ReservationRegister() {
         super("Reservation");
+        this.initComponent();
+    }
+
+    public ReservationRegister(Reservation reservation) {
+        super("Reservation");
+        this.reservation = reservation;
+        this.initComponent();
+    }
+
+    public void initComponent() {
+        if (this.reservation != null) {
+            txtDateEntry.setDate(this.reservation.getDateEntry());
+            txtDateDeparture.setDate(this.reservation.getDateDeparture());
+            txtPaymentMethod.setSelectedItem(this.reservation.getPaymentMethod());
+            txtValue.setText(String.valueOf(this.reservation.getValue()));
+        }
+
         setIconImage(Toolkit.getDefaultToolkit().getImage(ReservationRegister.class.getResource("/images/aH-40px.png")));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 910, 560);
@@ -216,7 +241,11 @@ public class ReservationRegister extends JFrame {
         txtDateEntry.setBorder(new LineBorder(SystemColor.window));
         txtDateEntry.setDateFormatString("yyyy-MM-dd");
         txtDateEntry.setFont(new Font("Roboto", Font.PLAIN, 18));
+        txtDateEntry.addPropertyChangeListener(evt -> this.calculateValueReservation());
         txtDateEntry.setForeground(Color.BLACK);
+        if (reservation != null) {
+            txtDateEntry.setDate(reservation.getDateEntry());
+        }
         panel.add(txtDateEntry);
 
         txtDateDeparture = new JDateChooser();
@@ -227,12 +256,15 @@ public class ReservationRegister extends JFrame {
         txtDateDeparture.setBackground(Color.WHITE);
         txtDateDeparture.setFont(new Font("Roboto", Font.PLAIN, 18));
         txtDateDeparture.addPropertyChangeListener(evt -> {
-            //Activa el evento, después del usuario seleccionar las fechas se debe calcular el valor de la reserva
+            this.calculateValueReservation();
         });
         txtDateDeparture.setDateFormatString("yyyy-MM-dd");
         txtDateDeparture.getCalendarButton().setBackground(SystemColor.textHighlight);
         txtDateDeparture.setBorder(new LineBorder(new Color(255, 255, 255), 0));
-        panel.add(this.txtDateDeparture);
+        if (reservation != null) {
+            txtDateDeparture.setDate(reservation.getDateDeparture());
+        }
+        panel.add(txtDateDeparture);
 
         txtValue = new JTextField();
         txtValue.setBackground(SystemColor.text);
@@ -241,6 +273,9 @@ public class ReservationRegister extends JFrame {
         txtValue.setEditable(false);
         txtValue.setFont(new Font("Roboto Black", Font.BOLD, 17));
         txtValue.setBorder(javax.swing.BorderFactory.createEmptyBorder());
+        if (reservation != null) {
+            txtValue.setText(String.valueOf(reservation.getValue()));
+        }
         panel.add(txtValue);
         txtValue.setColumns(10);
 
@@ -250,7 +285,10 @@ public class ReservationRegister extends JFrame {
         txtPaymentMethod.setBorder(new LineBorder(new Color(255, 255, 255), 1, true));
         txtPaymentMethod.setFont(new Font("Roboto", Font.PLAIN, 16));
         txtPaymentMethod.setModel(new DefaultComboBoxModel(new String[] {"Credit Card", "Debit Card", "Cash"}));
-        panel.add(this.txtPaymentMethod);
+        if (reservation != null) {
+            txtPaymentMethod.setSelectedItem(reservation.getPaymentMethod());
+        }
+        panel.add(txtPaymentMethod);
 
         JPanel btnNext = new JPanel();
 
@@ -266,8 +304,17 @@ public class ReservationRegister extends JFrame {
             public void mouseClicked(MouseEvent e) {
                 if (ReservationRegister.txtDateEntry.getDate() != null && ReservationRegister.txtDateDeparture.getDate() != null) {
                     if (ReservationRegister.txtDateEntry.getDate().before(ReservationRegister.txtDateDeparture.getDate())) {
-                        GuestRegister frame = new GuestRegister();
+                        reservation = Reservation.builder()
+                                .id(ReservationRegister.generateIdReservation())
+                                .dateEntry(ReservationRegister.parseDate(txtDateEntry.getDate()))
+                                .dateDeparture(ReservationRegister.parseDate(txtDateDeparture.getDate()))
+                                .value(BigDecimal.valueOf(ReservationRegister.calculateValueReservation()))
+                                .paymentMethod(txtPaymentMethod.getSelectedItem().toString())
+                                .build();
+
+                        GuestRegister frame = new GuestRegister(reservation);
                         frame.setVisible(true);
+                        dispose();
                     } else {
                         JOptionPane.showMessageDialog(null, "The departure date must be greater than the entry date.");
                     }
@@ -292,5 +339,49 @@ public class ReservationRegister extends JFrame {
         int x = evt.getXOnScreen();
         int y = evt.getYOnScreen();
         this.setLocation(x - xMouse, y - yMouse);
+    }
+
+    private static double calculateValueReservation() {
+        if (txtDateEntry.getDate() == null || txtDateDeparture.getDate() == null) return 0;
+
+        double value = 0;
+        try {
+            Date dateEntry = parseDate(txtDateEntry.getDate());
+            Date dateDeparture = parseDate(txtDateDeparture.getDate());
+            long diff = dateDeparture.getTime() - dateEntry.getTime();
+            long days = TimeUnit.DAYS.convert(diff, TimeUnit.MILLISECONDS);
+
+            if (dateEntry.before(dateDeparture)) {
+                value = days * 5000;
+                txtValue.setText(String.valueOf(value));
+                return value;
+            } else {
+                JOptionPane.showMessageDialog(null, "The departure date must be greater than the entry date.");
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error calculating the value of the reservation.");
+        }
+
+        return 0;
+    }
+
+    private static BigInteger generateIdReservation() {
+        BigInteger code = BigInteger.valueOf(0);
+        try {
+            code = new BigInteger(String.valueOf(new Random().nextInt(999999999)));
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error generating reservation code.");
+        }
+        return code;
+    }
+
+    private static Date parseDate(Date date) {
+        try {
+            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+            return dateFormat.parse(dateFormat.format(date));
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(null, "Error parsing date.");
+        }
+        return null;
     }
 }
