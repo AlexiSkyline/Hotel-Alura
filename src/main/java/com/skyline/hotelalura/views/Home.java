@@ -110,7 +110,9 @@ public class Home extends JFrame {
             }
             @Override
             public void mouseClicked(MouseEvent e) {
-                // Todo: Abrir busca de reservas
+                ControlPanel controlPanel = new ControlPanel();
+                controlPanel.setVisible(true);
+                dispose();
             }
         });
         btnSearch.setBounds(0, 312, 257, 56);
