@@ -3,9 +3,9 @@ package com.skyline.hotelalura.repository;
 import com.skyline.hotelalura.models.Guest;
 import com.skyline.hotelalura.repository.interfaces.IGuestRepository;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.math.BigInteger;
+import java.sql.*;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,12 +19,26 @@ public class GuestRepository implements IGuestRepository {
 
     @Override
     public List<Guest> findAll() throws SQLException {
-        return null;
-    }
+        String sqlQuery = "SELECT * FROM guests;";
+        List<Guest> guests = new LinkedList<>();
 
-    @Override
-    public Optional<Guest> findById(int id) throws SQLException {
-        return Optional.empty();
+        try (Statement statement = this.connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sqlQuery)) {
+            while (resultSet.next()) {
+                Guest guest = Guest.builder()
+                        .id(resultSet.getInt(1))
+                        .name(resultSet.getString(2))
+                        .surname(resultSet.getString(3))
+                        .birthDate(resultSet.getDate(4))
+                        .nationality(resultSet.getString(5))
+                        .phoneNumber(resultSet.getString(6))
+                        .reservationId(BigInteger.valueOf(resultSet.getLong(7)))
+                        .build();
+                guests.add(guest);
+            }
+        }
+
+        return guests;
     }
 
     @Override

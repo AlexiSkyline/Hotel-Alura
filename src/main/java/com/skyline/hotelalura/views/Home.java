@@ -1,6 +1,7 @@
 package com.skyline.hotelalura.views;
 
 import com.skyline.hotelalura.views.reservation.ReservationRegister;
+import lombok.SneakyThrows;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -108,6 +109,7 @@ public class Home extends JFrame {
             public void mouseExited(MouseEvent e) {
                 btnSearch.setBackground(new Color(12, 138, 199));
             }
+            @SneakyThrows
             @Override
             public void mouseClicked(MouseEvent e) {
                 ControlPanel controlPanel = new ControlPanel();

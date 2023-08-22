@@ -3,9 +3,9 @@ package com.skyline.hotelalura.repository;
 import com.skyline.hotelalura.models.Reservation;
 import com.skyline.hotelalura.repository.interfaces.IReservationRepository;
 
-import java.sql.Connection;
-import java.sql.PreparedStatement;
-import java.sql.SQLException;
+import java.math.BigInteger;
+import java.sql.*;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,12 +19,24 @@ public class ReservationRepository implements IReservationRepository {
 
     @Override
     public List<Reservation> findAll() throws SQLException {
-        return null;
-    }
+        String sqlQuery = "SELECT * FROM reservations;";
+        List<Reservation> reservations = new LinkedList<>();
 
-    @Override
-    public Optional<Reservation> findById(int id) throws SQLException {
-        return Optional.empty();
+        try (Statement statement = this.connection.createStatement();
+             ResultSet resultSet = statement.executeQuery(sqlQuery)) {
+            while (resultSet.next()) {
+                Reservation reservation = Reservation.builder()
+                        .id(BigInteger.valueOf(resultSet.getLong("id")))
+                        .dateEntry(resultSet.getDate("date_entry"))
+                        .dateDeparture(resultSet.getDate("date_departure"))
+                        .value(resultSet.getBigDecimal("value"))
+                        .paymentMethod(resultSet.getString("payment_method"))
+                        .build();
+                reservations.add(reservation);
+            }
+        }
+
+        return reservations;
     }
 
     @Override

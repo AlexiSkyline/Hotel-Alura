@@ -1,14 +1,24 @@
 package com.skyline.hotelalura.views;
 
+import com.skyline.hotelalura.config.components.DaggerReservationComponent;
+import com.skyline.hotelalura.config.components.ReservationComponent;
+import com.skyline.hotelalura.controllers.ReservationController;
+import com.skyline.hotelalura.models.Guest;
 import com.skyline.hotelalura.models.Reservation;
+import lombok.SneakyThrows;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.math.BigInteger;
+import java.sql.SQLException;
+import java.util.List;
 import java.util.Objects;
 
 public class ControlPanel extends JFrame {
@@ -16,13 +26,21 @@ public class ControlPanel extends JFrame {
     private JTextField txtSearch;
     private JTable guestTable;
     private JTable reservationTable;
-    private DefaultTableModel modelo;
+    private DefaultTableModel reservationModel;
     private DefaultTableModel guestModel;
     private JLabel labelBack;
     private JLabel labelExit;
     private int xMouse, yMouse;
+    private ReservationController reservationController;
+    private List<Reservation> listReservation;
+    private List<Guest> listGuest;
+    private int initialSelectedIndex = 0;
 
+    @SneakyThrows
     public ControlPanel() {
+        ReservationComponent component = DaggerReservationComponent.create();
+        this.reservationController = component.buildReservationController();
+
         setIconImage(Toolkit.getDefaultToolkit().getImage(ControlPanel.class.getResource("/images/lupa2.png")));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setBounds(100, 100, 910, 571);
@@ -55,15 +73,17 @@ public class ControlPanel extends JFrame {
         reservationTable = new JTable();
         reservationTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         reservationTable.setFont(new Font("Roboto", Font.PLAIN, 16));
-        modelo = (DefaultTableModel) reservationTable.getModel();
-        modelo.addColumn("ID");
-        modelo.addColumn("Date Check In");
-        modelo.addColumn("Date Check Out");
-        modelo.addColumn("Value");
-        modelo.addColumn("Payment Method");
+        reservationModel = (DefaultTableModel) reservationTable.getModel();
+        reservationModel.addColumn("ID");
+        reservationModel.addColumn("Date Check In");
+        reservationModel.addColumn("Date Check Out");
+        reservationModel.addColumn("Value");
+        reservationModel.addColumn("Payment Method");
+        reservationTable.setDefaultEditor(Object.class, null);
         JScrollPane scroll_table = new JScrollPane(reservationTable);
         panel.addTab("Reservations", new ImageIcon(Objects.requireNonNull(ControlPanel.class.getResource("/images/reservado.png"))), scroll_table, null);
         scroll_table.setVisible(true);
+        showListReservation();
 
         guestTable = new JTable();
         guestTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -76,9 +96,11 @@ public class ControlPanel extends JFrame {
         guestModel.addColumn("Nationality");
         guestModel.addColumn("Phone");
         guestModel.addColumn("Reservation ID");
+        guestTable.setDefaultEditor(Object.class, null);
         JScrollPane scroll_tableHuespedes = new JScrollPane(guestTable);
         panel.addTab("Guests", new ImageIcon(Objects.requireNonNull(ControlPanel.class.getResource("/images/pessoas.png"))), scroll_tableHuespedes, null);
         scroll_tableHuespedes.setVisible(true);
+        showListGuest();
 
         JLabel lblNewLabel_2 = new JLabel("");
         lblNewLabel_2.setIcon(new ImageIcon(Objects.requireNonNull(ControlPanel.class.getResource("/images/Ha-100px.png"))));
@@ -170,11 +192,17 @@ public class ControlPanel extends JFrame {
         separator_1_2.setBounds(539, 159, 193, 2);
         contentPane.add(separator_1_2);
 
+        panel.addChangeListener(e -> {
+            initialSelectedIndex = panel.getSelectedIndex();
+        });
+
         JPanel btnSearch = new JPanel();
+
         btnSearch.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-
+                if (initialSelectedIndex == 0) searchReservation();
+                else searchGuest();
             }
         });
         btnSearch.setLayout(null);
@@ -218,6 +246,64 @@ public class ControlPanel extends JFrame {
         lblDelete.setBounds(0, 0, 122, 35);
         btnDelete.add(lblDelete);
         setResizable(false);
+    }
+
+    private void showListReservation() throws SQLException {
+        this.listReservation = this.reservationController.findAllReservations();
+        this.reservationModel = (DefaultTableModel) reservationTable.getModel();
+        reservationModel.setRowCount(0);
+
+        listReservation.forEach(reservation -> this.reservationModel.addRow(new Object[]{reservation.getId(), reservation.getDateEntry(), reservation.getDateDeparture(),
+                reservation.getValue(), reservation.getPaymentMethod()}));
+    }
+
+    private void showListGuest() throws SQLException {
+        this.listGuest = this.reservationController.findAllGuests();
+        this.guestModel = (DefaultTableModel) guestTable.getModel();
+        guestModel.setRowCount(0);
+
+        listGuest.forEach(guest -> this.guestModel.addRow(new Object[]{guest.getId(), guest.getName(), guest.getSurname(), guest.getBirthDate(), guest.getNationality(),
+                guest.getPhoneNumber(), guest.getReservationId()}));
+    }
+
+    @SneakyThrows
+    private void searchReservation() {
+        String search = txtSearch.getText();
+        if (search.equals("")) {
+            JOptionPane.showMessageDialog(null, "Please enter a reservation ID");
+            showListReservation();
+        } else {
+            List<Reservation> filterReservation = this.listReservation.stream()
+                    .filter(reservation -> String.valueOf(reservation.getId()).contains(search))
+                    .toList();
+            if (!filterReservation.isEmpty()) {
+                this.reservationModel.setRowCount(0);
+                filterReservation.forEach(reservation -> this.reservationModel.addRow(new Object[]{reservation.getId(), reservation.getDateEntry(), reservation.getDateDeparture(),
+                        reservation.getValue(), reservation.getPaymentMethod()}));
+            } else {
+                JOptionPane.showMessageDialog(null, "Reservation not found");
+            }
+        }
+    }
+
+    @SneakyThrows
+    private void searchGuest() {
+        String search = txtSearch.getText();
+        if (search.equals("")) {
+            JOptionPane.showMessageDialog(null, "Please enter a guest surname");
+            showListGuest();
+        } else {
+            List<Guest> filterGuest = this.listGuest.stream()
+                    .filter(guest -> guest.getSurname().toLowerCase().contains(search.toLowerCase()))
+                    .toList();
+            if (!filterGuest.isEmpty()) {
+                this.guestModel.setRowCount(0);
+                filterGuest.forEach(guest -> this.guestModel.addRow(new Object[]{guest.getId(), guest.getName(), guest.getSurname(), guest.getBirthDate(), guest.getNationality(),
+                        guest.getPhoneNumber(), guest.getReservationId()}));
+            } else {
+                JOptionPane.showMessageDialog(null, "Guest not found");
+            }
+        }
     }
 
     private void headerMousePressed(java.awt.event.MouseEvent evt) {

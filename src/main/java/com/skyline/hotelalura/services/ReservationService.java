@@ -10,6 +10,7 @@ import com.skyline.hotelalura.utils.DataBaseConnection;
 import javax.inject.Inject;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.List;
 
 public class ReservationService implements IReservationService {
     private final IReservationRepository reservationRepository;
@@ -29,6 +30,22 @@ public class ReservationService implements IReservationService {
 
             this.reservationRepository.create(reservation);
             this.guestRepository.create(guest);
+        }
+    }
+
+    @Override
+    public List<Reservation> findAllReservations() throws SQLException {
+        try(Connection connection = DataBaseConnection.getConnection()) {
+            this.reservationRepository.setConnection(connection);
+            return this.reservationRepository.findAll();
+        }
+    }
+
+    @Override
+    public List<Guest> findAllGuests() throws SQLException {
+        try(Connection connection = DataBaseConnection.getConnection()) {
+            this.guestRepository.setConnection(connection);
+            return this.guestRepository.findAll();
         }
     }
 }
