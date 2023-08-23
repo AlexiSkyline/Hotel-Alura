@@ -13,4 +13,6 @@ public interface IReservationService {
     List<Guest> findAllGuests() throws SQLException;
     void deleteReservationById(BigInteger id) throws SQLException;
     void deleteGuestById(int id) throws SQLException;
+    void updateReservation(Reservation reservation) throws SQLException;
+    void updateGuest(Guest guest) throws SQLException;
 }

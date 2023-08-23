@@ -7,6 +7,7 @@ import com.skyline.hotelalura.config.components.UserComponent;
 import com.skyline.hotelalura.controllers.ReservationController;
 import com.skyline.hotelalura.models.Guest;
 import com.skyline.hotelalura.models.Reservation;
+import com.skyline.hotelalura.views.ControlPanel;
 import com.skyline.hotelalura.views.Home;
 import com.skyline.hotelalura.views.reservation.ReservationRegister;
 import com.toedter.calendar.JDateChooser;
@@ -17,6 +18,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.math.BigInteger;
 import java.sql.SQLException;
 import java.text.Format;
 import java.text.SimpleDateFormat;
@@ -35,9 +37,23 @@ public class GuestRegister extends JFrame  {
     private JLabel labelExit;
     private JLabel labelBack;
     private int xMouse, yMouse;
-    private final ReservationController reservationController;
+    private ReservationController reservationController;
+    private Reservation reservation;
+    private Guest guest;
+    private boolean isUpdate = false;
 
     public GuestRegister(Reservation reservation) {
+        this.reservation = reservation;
+        initComponent();
+    }
+
+    public GuestRegister(Guest guest, boolean isUpdate) {
+        this.guest = guest;
+        this.isUpdate = isUpdate;
+        initComponent();
+    }
+
+    public void initComponent() {
         ReservationComponent component = DaggerReservationComponent.create();
         this.reservationController = component.buildReservationController();
 
@@ -76,9 +92,15 @@ public class GuestRegister extends JFrame  {
         btnExit.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                Home home = new Home();
-                home.setVisible(true);
-                dispose();
+                if (isUpdate) {
+                    ControlPanel frame = new ControlPanel();
+                    frame.setVisible(true);
+                    dispose();
+                } else {
+                    ReservationRegister frame = new ReservationRegister(reservation);
+                    frame.setVisible(true);
+                    dispose();
+                }
             }
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -112,9 +134,15 @@ public class GuestRegister extends JFrame  {
         btnBack.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                ReservationRegister frame = new ReservationRegister(reservation);
-                frame.setVisible(true);
-                dispose();
+                if (isUpdate) {
+                    ControlPanel frame = new ControlPanel();
+                    frame.setVisible(true);
+                    dispose();
+                } else {
+                    ReservationRegister frame = new ReservationRegister(reservation);
+                    frame.setVisible(true);
+                    dispose();
+                }
             }
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -146,6 +174,9 @@ public class GuestRegister extends JFrame  {
         txtName.setColumns(10);
         txtName.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         contentPane.add(txtName);
+        if (isUpdate && guest != null) {
+            txtName.setText(guest.getName());
+        }
 
         txtSurname = new JTextField();
         txtSurname.setFont(new Font("Roboto", Font.PLAIN, 16));
@@ -154,6 +185,9 @@ public class GuestRegister extends JFrame  {
         txtSurname.setBackground(Color.WHITE);
         txtSurname.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         contentPane.add(txtSurname);
+        if (isUpdate && guest != null) {
+            txtSurname.setText(guest.getSurname());
+        }
 
         txtBirthDate = new JDateChooser();
         txtBirthDate.setBounds(560, 278, 285, 36);
@@ -161,6 +195,9 @@ public class GuestRegister extends JFrame  {
         txtBirthDate.getCalendarButton().setBackground(SystemColor.textHighlight);
         txtBirthDate.setDateFormatString("yyyy-MM-dd");
         contentPane.add(txtBirthDate);
+        if (isUpdate && guest != null) {
+            txtBirthDate.setDate(guest.getBirthDate());
+        }
 
         txtNationality = new JComboBox();
         txtNationality.setBounds(560, 350, 289, 36);
@@ -168,6 +205,9 @@ public class GuestRegister extends JFrame  {
         txtNationality.setFont(new Font("Roboto", Font.PLAIN, 16));
         txtNationality.setModel(new DefaultComboBoxModel(new String[] {"afgano-afgana", "alemán-", "alemana", "árabe-árabe", "argentino-argentina", "australiano-australiana", "belga-belga", "boliviano-boliviana", "brasileño-brasileña", "camboyano-camboyana", "canadiense-canadiense", "chileno-chilena", "chino-china", "colombiano-colombiana", "coreano-coreana", "costarricense-costarricense", "cubano-cubana", "danés-danesa", "ecuatoriano-ecuatoriana", "egipcio-egipcia", "salvadoreño-salvadoreña", "escocés-escocesa", "español-española", "estadounidense-estadounidense", "estonio-estonia", "etiope-etiope", "filipino-filipina", "finlandés-finlandesa", "francés-francesa", "galés-galesa", "griego-griega", "guatemalteco-guatemalteca", "haitiano-haitiana", "holandés-holandesa", "hondureño-hondureña", "indonés-indonesa", "inglés-inglesa", "iraquí-iraquí", "iraní-iraní", "irlandés-irlandesa", "israelí-israelí", "italiano-italiana", "japonés-japonesa", "jordano-jordana", "laosiano-laosiana", "letón-letona", "letonés-letonesa", "malayo-malaya", "marroquí-marroquí", "mexicano-mexicana", "nicaragüense-nicaragüense", "noruego-noruega", "neozelandés-neozelandesa", "panameño-panameña", "paraguayo-paraguaya", "peruano-peruana", "polaco-polaca", "portugués-portuguesa", "puertorriqueño-puertorriqueño", "dominicano-dominicana", "rumano-rumana", "ruso-rusa", "sueco-sueca", "suizo-suiza", "tailandés-tailandesa", "taiwanes-taiwanesa", "turco-turca", "ucraniano-ucraniana", "uruguayo-uruguaya", "venezolano-venezolana", "vietnamita-vietnamita"}));
         contentPane.add(txtNationality);
+        if (isUpdate && guest != null) {
+            txtNationality.setSelectedItem(guest.getNationality());
+        }
 
         JLabel lblName = new JLabel("NAME");
         lblName.setBounds(562, 119, 253, 14);
@@ -206,8 +246,11 @@ public class GuestRegister extends JFrame  {
         txtPhoneNumber.setBackground(Color.WHITE);
         txtPhoneNumber.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         contentPane.add(txtPhoneNumber);
+        if (isUpdate && guest != null) {
+            txtPhoneNumber.setText(guest.getPhoneNumber());
+        }
 
-        JLabel lblTitle = new JLabel("GUEST REGISTER");
+        JLabel lblTitle = new JLabel(isUpdate ? "GUEST UPDATE" : "GUEST REGISTER");
         lblTitle.setBounds(606, 55, 234, 42);
         lblTitle.setForeground(new Color(12, 138, 199));
         lblTitle.setFont(new Font("Roboto Black", Font.PLAIN, 23));
@@ -226,7 +269,11 @@ public class GuestRegister extends JFrame  {
         txtReservationNumber.setBackground(Color.WHITE);
         txtReservationNumber.setBorder(javax.swing.BorderFactory.createEmptyBorder());
         contentPane.add(txtReservationNumber);
-        txtReservationNumber.setText(String.valueOf(reservation.getId()));
+        if (isUpdate && guest != null) {
+            txtReservationNumber.setText(String.valueOf(guest.getReservationId()));
+        } else {
+            txtReservationNumber.setText(String.valueOf(reservation.getId()));
+        }
 
         JSeparator separator_1_2 = new JSeparator();
         separator_1_2.setBounds(560, 170, 289, 2);
@@ -269,25 +316,8 @@ public class GuestRegister extends JFrame  {
         btnSave.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                Guest guest = Guest.builder()
-                        .id(0)
-                        .name(txtName.getText())
-                        .surname(txtSurname.getText())
-                        .birthDate(parseDate(txtBirthDate.getDate()))
-                        .nationality(txtNationality.getSelectedItem().toString())
-                        .phoneNumber(txtPhoneNumber.getText())
-                        .reservationId(reservation.getId())
-                        .build();
-
-                try {
-                    reservationController.makeReservation(reservation, guest);
-                    JOptionPane.showMessageDialog(null, "Reservation made successfully!");
-                    Home home = new Home();
-                    home.setVisible(true);
-                    dispose();
-                } catch (SQLException ex) {
-                    JOptionPane.showMessageDialog(null, "Error while making reservation!");
-                }
+                if (isUpdate) updateGuest();
+                else saveData();
             }
         });
         btnSave.setLayout(null);
@@ -295,7 +325,7 @@ public class GuestRegister extends JFrame  {
         contentPane.add(btnSave);
         btnSave.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
 
-        JLabel labelSave = new JLabel("SAVE");
+        JLabel labelSave = new JLabel(isUpdate ? "UPDATE" : "SAVE");
         labelSave.setHorizontalAlignment(SwingConstants.CENTER);
         labelSave.setForeground(Color.WHITE);
         labelSave.setFont(new Font("Roboto", Font.PLAIN, 18));
@@ -328,6 +358,50 @@ public class GuestRegister extends JFrame  {
         int x = evt.getXOnScreen();
         int y = evt.getYOnScreen();
         this.setLocation(x - this.xMouse, y - this.yMouse);
+    }
+
+    private void saveData() {
+        Guest guest = Guest.builder()
+                .id(0)
+                .name(txtName.getText())
+                .surname(txtSurname.getText())
+                .birthDate(parseDate(txtBirthDate.getDate()))
+                .nationality(txtNationality.getSelectedItem().toString())
+                .phoneNumber(txtPhoneNumber.getText())
+                .reservationId(reservation.getId())
+                .build();
+
+        try {
+            reservationController.makeReservation(reservation, guest);
+            JOptionPane.showMessageDialog(null, "Reservation made successfully!");
+            Home home = new Home();
+            home.setVisible(true);
+            dispose();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Error while making reservation!");
+        }
+    }
+
+    private void updateGuest() {
+        Guest guest = Guest.builder()
+                .id(this.guest.getId())
+                .name(txtName.getText())
+                .surname(txtSurname.getText())
+                .birthDate(parseDate(txtBirthDate.getDate()))
+                .nationality(txtNationality.getSelectedItem().toString())
+                .phoneNumber(txtPhoneNumber.getText())
+                .reservationId(BigInteger.valueOf(Long.parseLong(txtReservationNumber.getText())))
+                .build();
+
+        try {
+            reservationController.updateGuest(guest);
+            JOptionPane.showMessageDialog(null, "Guest updated successfully");
+            ControlPanel panel = new ControlPanel();
+            panel.setVisible(true);
+            dispose();
+        } catch (SQLException ex) {
+            JOptionPane.showMessageDialog(null, "Error while updating guest!");
+        }
     }
 
     private static Date parseDate(Date date) {

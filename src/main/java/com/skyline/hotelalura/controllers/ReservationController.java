@@ -47,4 +47,12 @@ public class ReservationController {
     public void deleteGuest(int id) throws SQLException {
         this.reservationService.deleteGuestById(id);
     }
+
+    public void updateReservation(Reservation reservation) throws SQLException {
+        this.reservationService.updateReservation(reservation);
+    }
+
+    public void updateGuest(Guest guest) throws SQLException {
+        this.reservationService.updateGuest(guest);
+    }
 }

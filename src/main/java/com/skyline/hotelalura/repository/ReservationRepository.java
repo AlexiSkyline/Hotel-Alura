@@ -7,7 +7,6 @@ import java.math.BigInteger;
 import java.sql.*;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Optional;
 
 public class ReservationRepository implements IReservationRepository {
     private Connection connection;
@@ -55,7 +54,17 @@ public class ReservationRepository implements IReservationRepository {
 
     @Override
     public void update(Reservation reservation) throws SQLException {
+        String sqlQuery = "UPDATE reservations SET date_entry = ?, date_departure = ?, value = ?, payment_method = ? WHERE id = ?;";
 
+        try (PreparedStatement preparedStatement = this.connection.prepareStatement(sqlQuery)) {
+            preparedStatement.setDate(1, new java.sql.Date(reservation.getDateEntry().getTime()));
+            preparedStatement.setDate(2, new java.sql.Date(reservation.getDateDeparture().getTime()));
+            preparedStatement.setBigDecimal(3, reservation.getValue());
+            preparedStatement.setString(4, reservation.getPaymentMethod());
+            preparedStatement.setLong(5, reservation.getId().longValue());
+
+            preparedStatement.executeUpdate();
+        }
     }
 
     @Override

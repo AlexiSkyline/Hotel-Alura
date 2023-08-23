@@ -65,4 +65,20 @@ public class ReservationService implements IReservationService {
             this.guestRepository.delete(id);
         }
     }
+
+    @Override
+    public void updateReservation(Reservation reservation) throws SQLException {
+        try (Connection connection = DataBaseConnection.getConnection()) {
+            this.reservationRepository.setConnection(connection);
+            this.reservationRepository.update(reservation);
+        }
+    }
+
+    @Override
+    public void updateGuest(Guest guest) throws SQLException {
+        try (Connection connection = DataBaseConnection.getConnection()) {
+            this.guestRepository.setConnection(connection);
+            this.guestRepository.update(guest);
+        }
+    }
 }

@@ -58,7 +58,19 @@ public class GuestRepository implements IGuestRepository {
 
     @Override
     public void update(Guest guest) throws SQLException {
+        String sqlQuery = "UPDATE guests SET name = ?, surname = ?, birth_date = ?, nationality = ?, phone_number = ?, Reservation_Id = ? WHERE id = ?;";
 
+        try (PreparedStatement preparedStatement = this.connection.prepareStatement(sqlQuery)) {
+            preparedStatement.setString(1, guest.getName());
+            preparedStatement.setString(2, guest.getSurname());
+            preparedStatement.setDate(3, new java.sql.Date(guest.getBirthDate().getTime()));
+            preparedStatement.setString(4, guest.getNationality());
+            preparedStatement.setString(5, guest.getPhoneNumber());
+            preparedStatement.setLong(6, guest.getReservationId().longValue());
+            preparedStatement.setInt(7, guest.getId());
+
+            preparedStatement.executeUpdate();
+        }
     }
 
     @Override

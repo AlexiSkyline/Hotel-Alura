@@ -5,12 +5,12 @@ import com.skyline.hotelalura.config.components.ReservationComponent;
 import com.skyline.hotelalura.controllers.ReservationController;
 import com.skyline.hotelalura.models.Guest;
 import com.skyline.hotelalura.models.Reservation;
+import com.skyline.hotelalura.views.guest.GuestRegister;
+import com.skyline.hotelalura.views.reservation.ReservationRegister;
 import lombok.SneakyThrows;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
@@ -95,6 +95,7 @@ public class ControlPanel extends JFrame {
         JScrollPane scroll_table = new JScrollPane(reservationTable);
         panel.addTab("Reservations", new ImageIcon(Objects.requireNonNull(ControlPanel.class.getResource("/images/reservado.png"))), scroll_table, null);
         scroll_table.setVisible(true);
+        showListReservation();
 
         guestTable = new JTable();
         guestTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -244,6 +245,13 @@ public class ControlPanel extends JFrame {
         btnEdit.setBackground(new Color(12, 138, 199));
         btnEdit.setBounds(635, 508, 122, 35);
         btnEdit.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnEdit.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (initialSelectedIndex == 0) updateReservation();
+                else updateGuest();
+            }
+        });
         contentPane.add(btnEdit);
 
         JLabel lblEdit = new JLabel("EDIT");
@@ -350,6 +358,28 @@ public class ControlPanel extends JFrame {
         }
     }
 
+    private void updateReservation() {
+        if (this.selectedReservation == null) {
+            JOptionPane.showMessageDialog(null, "Please select a reservation");
+            return;
+        }
+
+        ReservationRegister reservationRegister = new ReservationRegister(this.selectedReservation, true);
+        reservationRegister.setVisible(true);
+        dispose();
+    }
+
+    private void updateGuest() {
+        if (this.selectedGuest == null) {
+            JOptionPane.showMessageDialog(null, "Please select a guest");
+            return;
+        }
+
+        GuestRegister guestRegister = new GuestRegister(this.selectedGuest, true);
+        guestRegister.setVisible(true);
+        dispose();
+    }
+
     private void deleteReservation() {
         if (this.selectedReservation == null) {
             JOptionPane.showMessageDialog(null, "Please select a reservation");
@@ -363,6 +393,7 @@ public class ControlPanel extends JFrame {
                 JOptionPane.showMessageDialog(null, "Reservation deleted successfully");
                 this.showListReservation();
                 this.showListGuest();
+                this.selectedReservation = null;
             } catch (SQLException e) {
                 JOptionPane.showMessageDialog(null, "This reservation has guests, so it cannot be deleted");
             }
@@ -381,6 +412,7 @@ public class ControlPanel extends JFrame {
                 this.reservationController.deleteGuest(guestId);
                 JOptionPane.showMessageDialog(null, "Guest deleted successfully");
                 this.showListGuest();
+                this.selectedGuest = null;
             } catch (SQLException e) {
                 JOptionPane.showMessageDialog(null, "This guest is the only one in the reservation, so it cannot be deleted");
             }
