@@ -35,6 +35,8 @@ public class ControlPanel extends JFrame {
     private List<Reservation> listReservation;
     private List<Guest> listGuest;
     private int initialSelectedIndex = 0;
+    private Reservation selectedReservation;
+    private Guest selectedGuest;
 
     @SneakyThrows
     public ControlPanel() {
@@ -80,10 +82,19 @@ public class ControlPanel extends JFrame {
         reservationModel.addColumn("Value");
         reservationModel.addColumn("Payment Method");
         reservationTable.setDefaultEditor(Object.class, null);
+        reservationTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int selectedRow = reservationTable.getSelectedRow();
+                if (selectedRow != -1) {
+                    BigInteger reservationId = BigInteger.valueOf(Long.parseLong(reservationTable.getValueAt(selectedRow, 0).toString()));
+                    selectedReservation = listReservation.stream().filter(reservation -> reservation.getId().equals(reservationId)).findFirst().orElse(null);
+                }
+            }
+        });
         JScrollPane scroll_table = new JScrollPane(reservationTable);
         panel.addTab("Reservations", new ImageIcon(Objects.requireNonNull(ControlPanel.class.getResource("/images/reservado.png"))), scroll_table, null);
         scroll_table.setVisible(true);
-        showListReservation();
 
         guestTable = new JTable();
         guestTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -97,10 +108,19 @@ public class ControlPanel extends JFrame {
         guestModel.addColumn("Phone");
         guestModel.addColumn("Reservation ID");
         guestTable.setDefaultEditor(Object.class, null);
+        guestTable.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                int selectedRow = guestTable.getSelectedRow();
+                if (selectedRow != -1) {
+                    int guestId = Integer.parseInt(guestTable.getValueAt(selectedRow, 0).toString());
+                    selectedGuest = listGuest.stream().filter(guest -> guest.getId() == guestId).findFirst().orElse(null);
+                }
+            }
+        });
         JScrollPane scroll_tableHuespedes = new JScrollPane(guestTable);
         panel.addTab("Guests", new ImageIcon(Objects.requireNonNull(ControlPanel.class.getResource("/images/pessoas.png"))), scroll_tableHuespedes, null);
         scroll_tableHuespedes.setVisible(true);
-        showListGuest();
 
         JLabel lblNewLabel_2 = new JLabel("");
         lblNewLabel_2.setIcon(new ImageIcon(Objects.requireNonNull(ControlPanel.class.getResource("/images/Ha-100px.png"))));
@@ -194,6 +214,7 @@ public class ControlPanel extends JFrame {
 
         panel.addChangeListener(e -> {
             initialSelectedIndex = panel.getSelectedIndex();
+            detectedTabChange();
         });
 
         JPanel btnSearch = new JPanel();
@@ -237,6 +258,13 @@ public class ControlPanel extends JFrame {
         btnDelete.setBackground(new Color(12, 138, 199));
         btnDelete.setBounds(767, 508, 122, 35);
         btnDelete.setCursor(new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR));
+        btnDelete.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                if (initialSelectedIndex == 0) deleteReservation();
+                else deleteGuest();
+            }
+        });
         contentPane.add(btnDelete);
 
         JLabel lblDelete = new JLabel("DELETE");
@@ -246,6 +274,22 @@ public class ControlPanel extends JFrame {
         lblDelete.setBounds(0, 0, 122, 35);
         btnDelete.add(lblDelete);
         setResizable(false);
+    }
+
+    private void detectedTabChange() {
+        if (initialSelectedIndex == 0) {
+            try {
+                showListReservation();
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+        } else {
+            try {
+                showListGuest();
+            } catch (SQLException throwables) {
+                throwables.printStackTrace();
+            }
+        }
     }
 
     private void showListReservation() throws SQLException {
@@ -302,6 +346,43 @@ public class ControlPanel extends JFrame {
                         guest.getPhoneNumber(), guest.getReservationId()}));
             } else {
                 JOptionPane.showMessageDialog(null, "Guest not found");
+            }
+        }
+    }
+
+    private void deleteReservation() {
+        if (this.selectedReservation == null) {
+            JOptionPane.showMessageDialog(null, "Please select a reservation");
+            return;
+        }
+
+        BigInteger reservationId = this.selectedReservation.getId();
+        if (reservationId != null) {
+            try {
+                this.reservationController.deleteReservation(reservationId);
+                JOptionPane.showMessageDialog(null, "Reservation deleted successfully");
+                this.showListReservation();
+                this.showListGuest();
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null, "This reservation has guests, so it cannot be deleted");
+            }
+        }
+    }
+
+    private void deleteGuest() {
+        if (this.selectedGuest == null) {
+            JOptionPane.showMessageDialog(null, "Please select a guest");
+            return;
+        }
+
+        int guestId = this.selectedGuest.getId();
+        if (guestId != 0) {
+            try {
+                this.reservationController.deleteGuest(guestId);
+                JOptionPane.showMessageDialog(null, "Guest deleted successfully");
+                this.showListGuest();
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null, "This guest is the only one in the reservation, so it cannot be deleted");
             }
         }
     }

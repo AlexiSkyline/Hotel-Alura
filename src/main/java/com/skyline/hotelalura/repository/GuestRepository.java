@@ -63,6 +63,11 @@ public class GuestRepository implements IGuestRepository {
 
     @Override
     public void delete(int id) throws SQLException {
+        String sqlQuery = "DELETE FROM guests WHERE id = ?;";
 
+        try (PreparedStatement preparedStatement = this.connection.prepareStatement(sqlQuery)) {
+            preparedStatement.setInt(1, id);
+            preparedStatement.executeUpdate();
+        }
     }
 }

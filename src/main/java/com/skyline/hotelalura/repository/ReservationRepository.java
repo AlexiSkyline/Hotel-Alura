@@ -59,7 +59,12 @@ public class ReservationRepository implements IReservationRepository {
     }
 
     @Override
-    public void delete(int id) throws SQLException {
+    public void delete(BigInteger id) throws SQLException {
+        String sqlQuery = "DELETE FROM reservations WHERE id = ?;";
 
+        try (PreparedStatement preparedStatement = this.connection.prepareStatement(sqlQuery)) {
+            preparedStatement.setLong(1, id.longValue());
+            preparedStatement.executeUpdate();
+        }
     }
 }

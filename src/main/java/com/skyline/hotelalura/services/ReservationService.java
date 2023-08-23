@@ -8,6 +8,7 @@ import com.skyline.hotelalura.services.interfaces.IReservationService;
 import com.skyline.hotelalura.utils.DataBaseConnection;
 
 import javax.inject.Inject;
+import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.List;
@@ -46,6 +47,22 @@ public class ReservationService implements IReservationService {
         try(Connection connection = DataBaseConnection.getConnection()) {
             this.guestRepository.setConnection(connection);
             return this.guestRepository.findAll();
+        }
+    }
+
+    @Override
+    public void deleteReservationById(BigInteger id) throws SQLException {
+        try(Connection connection = DataBaseConnection.getConnection()) {
+            this.reservationRepository.setConnection(connection);
+            this.reservationRepository.delete(id);
+        }
+    }
+
+    @Override
+    public void deleteGuestById(int id) throws SQLException {
+        try(Connection connection = DataBaseConnection.getConnection()) {
+            this.guestRepository.setConnection(connection);
+            this.guestRepository.delete(id);
         }
     }
 }
