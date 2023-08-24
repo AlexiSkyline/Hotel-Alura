@@ -10,7 +10,7 @@ import java.util.Date;
 @Builder
 @Getter @Setter
 public class Guest {
-    private int id;
+    private Integer id;
     private String name;
     private String surname;
     private Date birthDate;

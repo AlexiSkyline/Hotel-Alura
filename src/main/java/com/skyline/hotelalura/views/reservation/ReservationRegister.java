@@ -8,7 +8,6 @@ import com.skyline.hotelalura.views.ControlPanel;
 import com.skyline.hotelalura.views.Home;
 import com.skyline.hotelalura.views.guest.GuestRegister;
 import com.toedter.calendar.JDateChooser;
-import lombok.SneakyThrows;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -19,6 +18,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Objects;
@@ -37,17 +37,6 @@ public class ReservationRegister extends JFrame {
     private Reservation reservation;
     private ReservationController reservationController;
     private boolean isUpdate = false;
-
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            try {
-                ReservationRegister frame = new ReservationRegister();
-                frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
 
     public ReservationRegister() {
         super("Reservation");
@@ -173,15 +162,7 @@ public class ReservationRegister extends JFrame {
         btnExit.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (isUpdate) {
-                    ControlPanel frame = new ControlPanel();
-                    frame.setVisible(true);
-                    dispose();
-                } else {
-                    Home home = new Home();
-                    home.setVisible(true);
-                    dispose();
-                }
+                redirect();
             }
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -228,15 +209,7 @@ public class ReservationRegister extends JFrame {
         btnBack.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (isUpdate) {
-                    ControlPanel frame = new ControlPanel();
-                    frame.setVisible(true);
-                    dispose();
-                } else {
-                    Home home = new Home();
-                    home.setVisible(true);
-                    dispose();
-                }
+                redirect();
             }
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -386,45 +359,68 @@ public class ReservationRegister extends JFrame {
     }
 
     private void buildReservation() {
-        if (ReservationRegister.txtDateEntry.getDate() != null && ReservationRegister.txtDateDeparture.getDate() != null) {
-            if (ReservationRegister.txtDateEntry.getDate().before(ReservationRegister.txtDateDeparture.getDate())) {
-                reservation = Reservation.builder()
-                        .id(ReservationRegister.generateIdReservation())
-                        .dateEntry(ReservationRegister.parseDate(txtDateEntry.getDate()))
-                        .dateDeparture(ReservationRegister.parseDate(txtDateDeparture.getDate()))
-                        .value(BigDecimal.valueOf(ReservationRegister.calculateValueReservation()))
-                        .paymentMethod(txtPaymentMethod.getSelectedItem().toString())
-                        .build();
+        if (this.isValidInput()) {
+            reservation = Reservation.builder()
+                    .id(ReservationRegister.generateIdReservation())
+                    .dateEntry(ReservationRegister.parseDate(txtDateEntry.getDate()))
+                    .dateDeparture(ReservationRegister.parseDate(txtDateDeparture.getDate()))
+                    .value(BigDecimal.valueOf(ReservationRegister.calculateValueReservation()))
+                    .paymentMethod(txtPaymentMethod.getSelectedItem().toString())
+                    .build();
 
-                GuestRegister frame = new GuestRegister(reservation);
-                frame.setVisible(true);
-                dispose();
-            } else {
-                JOptionPane.showMessageDialog(null, "The departure date must be greater than the entry date.");
-            }
-        } else {
-            JOptionPane.showMessageDialog(null, "You must fill in all fields.");
+            GuestRegister frame = new GuestRegister(reservation);
+            frame.setVisible(true);
+            dispose();
         }
     }
 
-    @SneakyThrows
     private void updateReservation() {
-        if (ReservationRegister.txtDateEntry.getDate() != null && ReservationRegister.txtDateDeparture.getDate() != null) {
-            if (ReservationRegister.txtDateEntry.getDate().before(ReservationRegister.txtDateDeparture.getDate())) {
-                reservation.setDateEntry(ReservationRegister.parseDate(txtDateEntry.getDate()));
-                reservation.setDateDeparture(ReservationRegister.parseDate(txtDateDeparture.getDate()));
-                reservation.setValue(BigDecimal.valueOf(ReservationRegister.calculateValueReservation()));
-                reservation.setPaymentMethod(txtPaymentMethod.getSelectedItem().toString());
+        if (this.isValidInput()) {
+            reservation.setDateEntry(ReservationRegister.parseDate(txtDateEntry.getDate()));
+            reservation.setDateDeparture(ReservationRegister.parseDate(txtDateDeparture.getDate()));
+            reservation.setValue(BigDecimal.valueOf(ReservationRegister.calculateValueReservation()));
+            reservation.setPaymentMethod(txtPaymentMethod.getSelectedItem().toString());
 
+            try {
                 this.reservationController.updateReservation(reservation);
-                ControlPanel frame = new ControlPanel();
-                frame.setVisible(true);
-                dispose();
-            } else {
-                JOptionPane.showMessageDialog(null, "The departure date must be greater than the entry date.");
+                this.redirect();
+                JOptionPane.showMessageDialog(null, "Reservation updated successfully.");
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog(null, "Error updating reservation.");
             }
+        }
+    }
+
+    private boolean isValidInput() {
+        if (txtDateEntry.getDate() == null) {
+            JOptionPane.showMessageDialog(null, "The entry date is required.");
+            txtDateEntry.requestFocus();
+            return false;
+        }
+
+        if (txtDateDeparture.getDate() == null) {
+            JOptionPane.showMessageDialog(null, "The departure date is required.");
+            txtDateDeparture.requestFocus();
+            return false;
+        }
+
+        if (ReservationRegister.txtDateEntry.getDate().after(ReservationRegister.txtDateDeparture.getDate())) {
+            JOptionPane.showMessageDialog(null, "The departure date must be greater than the entry date.");
+            return false;
+        }
+
+        return true;
+    }
+
+    private void redirect() {
+        if (isUpdate) {
+            ControlPanel frame = new ControlPanel();
+            frame.setVisible(true);
+            dispose();
         } else {
-            JOptionPane.showMessageDialog(null, "You must fill in all fields.");
+            Home home = new Home();
+            home.setVisible(true);
+            dispose();
         }
     }
 

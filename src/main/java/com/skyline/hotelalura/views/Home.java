@@ -20,17 +20,6 @@ public class Home extends JFrame {
     private JLabel labelExit;
     private JLabel labelRegister;
 
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            try {
-                Home frame = new Home();
-                frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
-
     public Home() {
         setIconImage(Toolkit.getDefaultToolkit().getImage(Home.class.getResource("/images/aH-40px.png")));
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);

@@ -3,6 +3,9 @@ package com.skyline.hotelalura.views;
 import com.skyline.hotelalura.config.components.DaggerUserComponent;
 import com.skyline.hotelalura.config.components.UserComponent;
 import com.skyline.hotelalura.controllers.AuthController;
+import com.skyline.hotelalura.views.validators.ItemForm;
+import com.skyline.hotelalura.views.validators.validationOptions.LengthValidator;
+import com.skyline.hotelalura.views.validators.validationOptions.RequiredValidator;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -10,6 +13,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionAdapter;
+import java.sql.SQLException;
 import java.util.Objects;
 
 public class Login extends JFrame {
@@ -21,16 +25,6 @@ public class Login extends JFrame {
     public int xMouse, yMouse;
     private final JLabel labelExit;
 
-    public static void main(String[] args) {
-        EventQueue.invokeLater(() -> {
-            try {
-                Login frame = new Login();
-                frame.setVisible(true);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-    }
 
     public Login() {
         UserComponent component = DaggerUserComponent.create();
@@ -222,9 +216,8 @@ public class Login extends JFrame {
     private void login() {
         String username = txtUsername.getText();
         String password = String.valueOf(txtPassword.getPassword());
-        if (username.equals("Enter your username") || password.equals("********")) {
-            JOptionPane.showMessageDialog(null, "Please enter your username and password");
-        } else {
+
+        if (this.isValidInput()) {
             try {
                 boolean response = this.controller.login(username, password);
 
@@ -236,10 +229,38 @@ public class Login extends JFrame {
                     JOptionPane.showMessageDialog( null, "Incorrect username and/or password",
                             "Error Login", JOptionPane.WARNING_MESSAGE );
                 }
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(null, e);
+            } catch (SQLException e) {
+                JOptionPane.showMessageDialog( null, "Error connecting to database",
+                        "Error Login", JOptionPane.WARNING_MESSAGE);
             }
         }
+    }
+
+    private boolean isValidInput() {
+        if (this.txtUsername.getText().equals("Enter your username")) this.txtUsername.setText("");
+        if (String.valueOf(this.txtPassword.getPassword()).equals("********")) this.txtPassword.setText("");
+
+        ItemForm userNameItem = new ItemForm("Username", this.txtUsername.getText())
+                .addValidator(new RequiredValidator())
+                .addValidator(new LengthValidator(5, 20));
+
+        ItemForm passwordItem = new ItemForm("Password", String.valueOf(this.txtPassword.getPassword()))
+                .addValidator(new RequiredValidator())
+                .addValidator(new LengthValidator(5, 16));
+
+        if (!userNameItem.isValid()) {
+            userNameItem.printMessage();
+            this.txtUsername.requestFocus();
+            return false;
+        }
+
+        if (!passwordItem.isValid()) {
+            passwordItem.printMessage();
+            this.txtPassword.requestFocus();
+            return false;
+        }
+
+        return true;
     }
 
     private void headerMousePressed(java.awt.event.MouseEvent evt) {

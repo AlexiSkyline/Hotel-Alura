@@ -1,15 +1,17 @@
 package com.skyline.hotelalura.views.guest;
 
 import com.skyline.hotelalura.config.components.DaggerReservationComponent;
-import com.skyline.hotelalura.config.components.DaggerUserComponent;
 import com.skyline.hotelalura.config.components.ReservationComponent;
-import com.skyline.hotelalura.config.components.UserComponent;
 import com.skyline.hotelalura.controllers.ReservationController;
 import com.skyline.hotelalura.models.Guest;
 import com.skyline.hotelalura.models.Reservation;
 import com.skyline.hotelalura.views.ControlPanel;
 import com.skyline.hotelalura.views.Home;
 import com.skyline.hotelalura.views.reservation.ReservationRegister;
+import com.skyline.hotelalura.views.validators.ItemForm;
+import com.skyline.hotelalura.views.validators.validationOptions.LengthValidator;
+import com.skyline.hotelalura.views.validators.validationOptions.NumberValidator;
+import com.skyline.hotelalura.views.validators.validationOptions.RequiredValidator;
 import com.toedter.calendar.JDateChooser;
 
 import javax.swing.*;
@@ -92,15 +94,7 @@ public class GuestRegister extends JFrame  {
         btnExit.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                if (isUpdate) {
-                    ControlPanel frame = new ControlPanel();
-                    frame.setVisible(true);
-                    dispose();
-                } else {
-                    ReservationRegister frame = new ReservationRegister(reservation);
-                    frame.setVisible(true);
-                    dispose();
-                }
+                redirect();
             }
             @Override
             public void mouseEntered(MouseEvent e) {
@@ -361,46 +355,109 @@ public class GuestRegister extends JFrame  {
     }
 
     private void saveData() {
-        Guest guest = Guest.builder()
-                .id(0)
-                .name(txtName.getText())
-                .surname(txtSurname.getText())
-                .birthDate(parseDate(txtBirthDate.getDate()))
-                .nationality(txtNationality.getSelectedItem().toString())
-                .phoneNumber(txtPhoneNumber.getText())
-                .reservationId(reservation.getId())
-                .build();
+        if (this.isValidInput()) {
+            Guest guest = Guest.builder()
+                    .id(0)
+                    .name(txtName.getText())
+                    .surname(txtSurname.getText())
+                    .birthDate(parseDate(txtBirthDate.getDate()))
+                    .nationality(txtNationality.getSelectedItem().toString())
+                    .phoneNumber(txtPhoneNumber.getText())
+                    .reservationId(reservation.getId())
+                    .build();
 
-        try {
-            reservationController.makeReservation(reservation, guest);
-            JOptionPane.showMessageDialog(null, "Reservation made successfully!");
-            Home home = new Home();
-            home.setVisible(true);
-            dispose();
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(null, "Error while making reservation!");
+            try {
+                reservationController.makeReservation(reservation, guest);
+                JOptionPane.showMessageDialog(null, "Reservation made successfully!");
+                Home home = new Home();
+                home.setVisible(true);
+                dispose();
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(null, "Error while making reservation!");
+            }
         }
     }
 
     private void updateGuest() {
-        Guest guest = Guest.builder()
-                .id(this.guest.getId())
-                .name(txtName.getText())
-                .surname(txtSurname.getText())
-                .birthDate(parseDate(txtBirthDate.getDate()))
-                .nationality(txtNationality.getSelectedItem().toString())
-                .phoneNumber(txtPhoneNumber.getText())
-                .reservationId(BigInteger.valueOf(Long.parseLong(txtReservationNumber.getText())))
-                .build();
+        if (this.isValidInput()) {
+            Guest guest = Guest.builder()
+                    .id(this.guest.getId())
+                    .name(txtName.getText())
+                    .surname(txtSurname.getText())
+                    .birthDate(parseDate(txtBirthDate.getDate()))
+                    .nationality(txtNationality.getSelectedItem().toString())
+                    .phoneNumber(txtPhoneNumber.getText())
+                    .reservationId(BigInteger.valueOf(Long.parseLong(txtReservationNumber.getText())))
+                    .build();
 
-        try {
-            reservationController.updateGuest(guest);
-            JOptionPane.showMessageDialog(null, "Guest updated successfully");
-            ControlPanel panel = new ControlPanel();
-            panel.setVisible(true);
+            try {
+                reservationController.updateGuest(guest);
+                this.redirect();
+                JOptionPane.showMessageDialog(null, "Guest updated successfully");
+            } catch (SQLException ex) {
+                JOptionPane.showMessageDialog(null, "Error while updating guest!");
+            }
+        }
+    }
+
+    private boolean isValidInput() {
+        ItemForm nameItem = new ItemForm("Name", this.txtName.getText())
+                .addValidator(new RequiredValidator())
+                .addValidator(new LengthValidator(3, 25));
+
+        ItemForm surnameItem = new ItemForm("Surname", this.txtSurname.getText())
+                .addValidator(new RequiredValidator())
+                .addValidator(new LengthValidator(3, 50));
+
+        ItemForm phoneNumberItem = new ItemForm("Phone Number", this.txtPhoneNumber.getText())
+                .addValidator(new RequiredValidator())
+                .addValidator(new LengthValidator(10, 15));
+
+        ItemForm reservationNumberItem = new ItemForm("Reservation Number", this.txtReservationNumber.getText())
+                .addValidator(new RequiredValidator())
+                .addValidator(new NumberValidator());
+
+        if(!nameItem.isValid()) {
+            nameItem.printMessage();
+            this.txtName.requestFocus();
+            return false;
+        }
+
+        if (txtBirthDate.getDate() == null) {
+            JOptionPane.showMessageDialog(null, "Please select a date");
+            return false;
+        }
+
+        if(!surnameItem.isValid()) {
+            surnameItem.printMessage();
+            this.txtSurname.requestFocus();
+            return false;
+        }
+
+        if(!phoneNumberItem.isValid()) {
+            phoneNumberItem.printMessage();
+            this.txtPhoneNumber.requestFocus();
+            return false;
+        }
+
+        if(!reservationNumberItem.isValid()) {
+            reservationNumberItem.printMessage();
+            this.txtReservationNumber.requestFocus();
+            return false;
+        }
+
+        return true;
+    }
+
+    private void redirect() {
+        if (isUpdate) {
+            ControlPanel frame = new ControlPanel();
+            frame.setVisible(true);
             dispose();
-        } catch (SQLException ex) {
-            JOptionPane.showMessageDialog(null, "Error while updating guest!");
+        } else {
+            ReservationRegister frame = new ReservationRegister(reservation);
+            frame.setVisible(true);
+            dispose();
         }
     }
 
